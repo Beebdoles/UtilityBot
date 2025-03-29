@@ -1,0 +1,127 @@
+[
+  {
+    "player1": "ratti",
+    "player1Wins": 0,
+    "player2": "ink sac",
+    "player2Wins": 0,
+    "matches": [],
+    "totalMatches": 0
+  },
+  {
+    "player1": "moth",
+    "player1Wins": 0,
+    "player2": "ink sac",
+    "player2Wins": 1,
+    "matches": [
+      {
+        "player1Character": "aba",
+        "player1Score": 0,
+        "player2Character": "kye",
+        "player2Score": 2,
+        "matchNumber": 1
+      }
+    ],
+    "totalMatches": 1
+  },
+  {
+    "player1": "lyle",
+    "player1Wins": 0,
+    "player2": "ink sac",
+    "player2Wins": 1,
+    "matches": [
+      {
+        "player1Character": "jacko",
+        "player1Score": 0,
+        "player2Character": "kye",
+        "player2Score": 2,
+        "matchNumber": 1
+      }
+    ],
+    "totalMatches": 1
+  },
+  {
+    "player1": "ink sac",
+    "player1Wins": 1,
+    "player2": "mersalt",
+    "player2Wins": 0,
+    "matches": [
+      {
+        "player1Character": "kye",
+        "player1Score": 2,
+        "player2Character": "faust",
+        "player2Score": 1,
+        "matchNumber": 1
+      }
+    ],
+    "totalMatches": 1
+  },
+  {
+    "player1": "mersalt",
+    "player1Wins": 3,
+    "player2": "ratti",
+    "player2Wins": 2,
+    "matches": [
+      {
+        "player1Character": "faust",
+        "player1Score": 2,
+        "player2Character": "asuka r#",
+        "player2Score": 0,
+        "matchNumber": 1
+      },
+      {
+        "player1Character": "faust",
+        "player1Score": 1,
+        "player2Character": "asuka r#",
+        "player2Score": 2,
+        "matchNumber": 2
+      },
+      {
+        "player1Character": "faust",
+        "player1Score": 0,
+        "player2Character": "asuka r#",
+        "player2Score": 2,
+        "matchNumber": 3
+      }
+    ],
+    "totalMatches": 3
+  },
+  {
+    "player1": "mersalt",
+    "player1Wins": 0,
+    "player2": "nimo",
+    "player2Wins": 2,
+    "matches": [
+      {
+        "player1Character": "faust",
+        "player1Score": 0,
+        "player2Character": "slayer",
+        "player2Score": 2,
+        "matchNumber": 1
+      },
+      {
+        "player1Character": "faust",
+        "player1Score": 0,
+        "player2Character": "slayer",
+        "player2Score": 2,
+        "matchNumber": 2
+      }
+    ],
+    "totalMatches": 2
+  },
+  {
+    "player1": "nimo",
+    "player1Wins": 1,
+    "player2": "ratti",
+    "player2Wins": 0,
+    "matches": [
+      {
+        "player1Character": "slayer",
+        "player1Score": 2,
+        "player2Character": "asuka r#",
+        "player2Score": 0,
+        "matchNumber": 1
+      }
+    ],
+    "totalMatches": 1
+  }
+]
