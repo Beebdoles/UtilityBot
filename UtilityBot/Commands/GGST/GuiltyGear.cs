@@ -25,15 +25,16 @@ namespace UtilityBot.Commands.GGST
 
         private List<string> activePool = new List<string>();                                       //use this for updating while program is running
         private List<string> people = new List<string>();                                           //use this as final storage
+        private List<Structs.Player> playerInfoContainer = new List<Structs.Player>();
         private List<string> duelMessages = new List<string>();
         private List<Structs.PlayerMatches> playerMatches = new List<Structs.PlayerMatches>();
 
 
         [Command("Duel")]
         [DSharpPlus.CommandsNext.Attributes.Description("Starts a duel by randomly choosing people from the active pool")]
-        public async Task Duel(CommandContext ctx)
+        public async Task Duel(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("optional: add \"-r\" for random characters")] string optional = "")
         {
-            if(!isRead)
+            if (!isRead)
             {
                 startUp();
             }
@@ -48,7 +49,26 @@ namespace UtilityBot.Commands.GGST
                     b = rd.Next(0, activePool.Count);
                 }
                 await ctx.RespondAsync(string.Format(duelMessages[rd.Next(0, duelMessages.Count)], activePool[a], activePool[b]) + "\nPlayer 1: " + activePool[a] + " Player 2: " + activePool[b]);
-                //await ctx.RespondAsync("Player 1: " + activePool[a] + ". Player 2: " + activePool[b]);
+
+                if (optional.Equals("-r"))
+                {
+                    Random rd2 = new Random();
+                    string choicea = "", choiceb = "";
+                    for (int i = 0; i < playerInfoContainer.Count; ++i)
+                    {
+                        if (playerInfoContainer[i].playerName.Equals(activePool[a]))
+                        {
+                            choicea = playerInfoContainer[i].characters[rd2.Next(0, playerInfoContainer[i].characters.Count)];
+                        }
+                        if (playerInfoContainer[i].playerName.Equals(activePool[b]))
+                        {
+                            choiceb = playerInfoContainer[i].characters[rd2.Next(0, playerInfoContainer[i].characters.Count)];
+                        }
+                    }
+
+                    await ctx.RespondAsync(activePool[a] + " will play: " + choicea + ", " + activePool[b] + " will play: " + choiceb);
+                }
+
                 isMatchOngoing = true;
                 player1 = activePool[a];
                 player2 = activePool[b];
@@ -81,7 +101,7 @@ namespace UtilityBot.Commands.GGST
         [Command("saveMatch")]
         [DSharpPlus.CommandsNext.Attributes.Description("Saves the current match, or add a new one through [OVERRIDE]")]
         public async Task matchdataEntry(
-            CommandContext ctx, 
+            CommandContext ctx,
             [DSharpPlus.CommandsNext.Attributes.Description("Player 1's character")] String character1,
             [DSharpPlus.CommandsNext.Attributes.Description("Player 2's character")] String character2,
             [DSharpPlus.CommandsNext.Attributes.Description("Player 1's score")] int score1,
@@ -90,7 +110,7 @@ namespace UtilityBot.Commands.GGST
             [DSharpPlus.CommandsNext.Attributes.Description("[OVERRIDE Player2's name")] String optionalPlayer2 = null,
             [DSharpPlus.CommandsNext.Attributes.Description("[OVERRIDE] whether or not a match override should be executed")] Boolean matchOverride = false)
         {
-            if(!isRead)
+            if (!isRead)
             {
                 startUp();
             }
@@ -101,7 +121,7 @@ namespace UtilityBot.Commands.GGST
 
                 String currentid1;
                 String currentid2;
-                if(matchOverride)
+                if (matchOverride)
                 {
                     currentid1 = optionalPlayer1 + optionalPlayer2;
                     currentid2 = optionalPlayer2 + optionalPlayer1;
@@ -122,7 +142,7 @@ namespace UtilityBot.Commands.GGST
 
                         if (score1 > score2)
                         {
-                            if(pm.player1.Equals(player1) || (matchOverride && pm.player1.Equals(optionalPlayer1)))
+                            if (pm.player1.Equals(player1) || (matchOverride && pm.player1.Equals(optionalPlayer1)))
                             {
                                 pm.player1Wins += 1;
 
@@ -164,7 +184,7 @@ namespace UtilityBot.Commands.GGST
                 if (!playerMatchExists)
                 {
                     Structs.PlayerMatches pm = new Structs.PlayerMatches();
-                    if(matchOverride)
+                    if (matchOverride)
                     {
                         pm.player1 = optionalPlayer1;
                         pm.player2 = optionalPlayer2;
@@ -208,7 +228,7 @@ namespace UtilityBot.Commands.GGST
 
         [Command("removeMatch")]
         [DSharpPlus.CommandsNext.Attributes.Description("Removes the specified match if it exists")]
-        public async Task RemoveMatch(CommandContext ctx, 
+        public async Task RemoveMatch(CommandContext ctx,
             [DSharpPlus.CommandsNext.Attributes.Description("Player 1's name")] String player1,
             [DSharpPlus.CommandsNext.Attributes.Description("Player 2's name")] String player2,
             [DSharpPlus.CommandsNext.Attributes.Description("The match number")] int matchNum)
@@ -219,14 +239,14 @@ namespace UtilityBot.Commands.GGST
             }
             String id = player1 + player2;
             Boolean found = false;
-            foreach(Structs.PlayerMatches pm in playerMatches)
+            foreach (Structs.PlayerMatches pm in playerMatches)
             {
-                if(id.Equals(pm.player1 + pm.player2) || id.Equals(pm.player2 + pm.player1))
+                if (id.Equals(pm.player1 + pm.player2) || id.Equals(pm.player2 + pm.player1))
                 {
-                    if(matchNum <= pm.totalMatches)
+                    if (matchNum <= pm.totalMatches)
                     {
                         Structs.DuelData tempDD = pm.matches[matchNum - 1];
-                        if(tempDD.player1Score > tempDD.player2Score)
+                        if (tempDD.player1Score > tempDD.player2Score)
                         {
                             --pm.player1Wins;
                         }
@@ -235,7 +255,7 @@ namespace UtilityBot.Commands.GGST
                             --pm.player2Wins;
                         }
                         pm.matches.Remove(pm.matches[matchNum - 1]);
-                        for(int i = matchNum - 1; i < pm.matches.Count; ++i)
+                        for (int i = matchNum - 1; i < pm.matches.Count; ++i)
                         {
                             pm.matches[i].matchNumber -= 1;
                         }
@@ -247,7 +267,7 @@ namespace UtilityBot.Commands.GGST
                     }
                 }
             }
-            if(!found)
+            if (!found)
             {
                 await ctx.RespondAsync("Match was not found. Nothing has been changed");
             }
@@ -257,7 +277,7 @@ namespace UtilityBot.Commands.GGST
         [DSharpPlus.CommandsNext.Attributes.Description("merge two existing matches")]
         public async Task Merge(CommandContext ctx)
         {
-            
+
         }
 
         [Command("showMatches")]
@@ -351,7 +371,7 @@ namespace UtilityBot.Commands.GGST
 
                     //builder.ImageUrl = ctx.Message.Author.AvatarUrl;
                     //builder.Url = ctx.Message.Author.AvatarUrl;
-                    if(optionalPage == 1)
+                    if (optionalPage == 1)
                     {
                         builder.Description = "First page is shown by default";
                     }
@@ -375,8 +395,8 @@ namespace UtilityBot.Commands.GGST
 
         [Command("showMatches")]
         [DSharpPlus.CommandsNext.Attributes.Description("Display matches between two players")]
-        public async Task ShowMatches(CommandContext ctx, 
-            [DSharpPlus.CommandsNext.Attributes.Description("Player 1's name")] String player1, 
+        public async Task ShowMatches(CommandContext ctx,
+            [DSharpPlus.CommandsNext.Attributes.Description("Player 1's name")] String player1,
             [DSharpPlus.CommandsNext.Attributes.Description("Player 2's name")] String player2,
             [DSharpPlus.CommandsNext.Attributes.Description("[optional] which page to view")] int optionalPage = 1)
         {
@@ -390,9 +410,9 @@ namespace UtilityBot.Commands.GGST
             String id2 = player2 + player1;
 
             Boolean isFound = false;
-            foreach(Structs.PlayerMatches pm in playerMatches)
+            foreach (Structs.PlayerMatches pm in playerMatches)
             {
-                if((pm.player1 + pm.player2).Equals(id1) || (pm.player1 + pm.player2).Equals(id2))
+                if ((pm.player1 + pm.player2).Equals(id1) || (pm.player1 + pm.player2).Equals(id2))
                 {
                     if (optionalPage > Convert.ToInt32(Math.Ceiling((double)pm.matches.Count / 5)))
                     {
@@ -472,7 +492,7 @@ namespace UtilityBot.Commands.GGST
                     }
                 }
             }
-            if(!isFound)
+            if (!isFound)
             {
                 await ctx.RespondAsync("Player match not found");
             }
@@ -509,6 +529,19 @@ namespace UtilityBot.Commands.GGST
             if (activePool.Remove(person))
             {
                 await ctx.RespondAsync("Removed " + person + " from the active pool");
+
+                foreach (Structs.Player p in playerInfoContainer)
+                {
+                    if (p.playerName.Equals(person))
+                    {
+                        playerInfoContainer.Remove(p);
+                        await ctx.RespondAsync("Removed " + person + " from character randomization pool");
+
+                        break;
+                    }
+                }
+
+                SyncPlayerInfo();
             }
             else
             {
@@ -545,12 +578,22 @@ namespace UtilityBot.Commands.GGST
                     {
                         pm.player1 = newName;
                     }
-                    else if(pm.player2.Equals(person))
+                    else if (pm.player2.Equals(person))
                     {
                         pm.player2 = newName;
                     }
                 }
+
+                foreach (Structs.Player p in playerInfoContainer)
+                {
+                    if (p.playerName.Equals(person))
+                    { 
+                        p.playerName = newName; 
+                    }
+                }
+
                 WriteJson();
+                SyncPlayerInfo();
             }
             else
             {
@@ -558,22 +601,108 @@ namespace UtilityBot.Commands.GGST
             }
         }
 
+        [Command("addcharacter")]
+        [DSharpPlus.CommandsNext.Attributes.Description("add a character to a player's name during randomization")]
+        public async Task AddCharacter(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("name of player")] string playerName, [DSharpPlus.CommandsNext.Attributes.Description("name of character")] string character)
+        {
+            if (!isRead)
+            {
+                startUp();
+            }
+
+            if (!activePool.Contains(playerName))
+            {
+                await ctx.RespondAsync("Cannot find " + playerName + " in active pool");
+                return;
+            }
+
+            Boolean notFound = true;
+            for (int i = 0; i < playerInfoContainer.Count; ++i)
+            {
+                if (playerInfoContainer[i].playerName.Equals(playerName))
+                {
+                    if (!playerInfoContainer[i].characters.Contains(character))
+                    {
+                        playerInfoContainer[i].characters.Add(character);
+
+                        await ctx.RespondAsync("Added " + character + " to " + playerName + "'s list");
+                    }
+                    else
+                    {
+                        await ctx.RespondAsync(character + " is already present in this player's list");
+                    }
+                    notFound = false;
+                }
+                else 
+                {
+                    notFound = notFound && true;
+                }
+            }
+
+            if(notFound) 
+            {
+                Structs.Player temp = new Structs.Player();
+                temp.characters = new List<string>();
+                temp.characters.Add(character);
+                temp.playerName = playerName;
+                playerInfoContainer.Add(temp);
+
+                await ctx.RespondAsync("Added " + character + " to " + playerName + "'s list");
+            }
+
+            SyncPlayerInfo();
+        }
+
+        [Command("removecharacter")]
+        [DSharpPlus.CommandsNext.Attributes.Description("remove a character to a player's name during randomization")]
+        public async Task RemoveCharacter(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("name of player")] string playerName, [DSharpPlus.CommandsNext.Attributes.Description("name of character")] string character)
+        {
+            if (!isRead)
+            {
+                startUp();
+            }
+
+            if(!activePool.Contains(playerName))
+            {
+                await ctx.RespondAsync("Cannot find " + playerName + " in active pool");
+                return;
+            }
+
+            for (int i = 0; i < playerInfoContainer.Count; ++i)
+            {
+                if (playerInfoContainer[i].playerName.Equals(playerName))
+                {
+                    if (playerInfoContainer[i].characters.Contains(character))
+                    {
+                        playerInfoContainer[i].characters.Remove(character);
+
+                        await ctx.RespondAsync("Removed " + character + " from " + playerName + "'s list");
+                    }
+                    else
+                    {
+                        await ctx.RespondAsync(character + " is not present in this player's list");
+                    }
+                }
+            }
+            SyncPlayerInfo();
+        }
+
         [Command("ggstplayers")]
         [DSharpPlus.CommandsNext.Attributes.Description("Display all registered players")]
-        public async Task GGSTPlayers(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("[optional: enter \"all\"] check for players in total player pool")] String optionalPool = "active")
+        public async Task GGSTPlayers(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("[optional: enter \"-a\"] check for players in total player pool")] String optionalPool = "active")
         {
-            if(!isRead)
+            if (!isRead)
             {
                 startUp();
             }
 
             StringBuilder sb = new StringBuilder();
             String mod = "";
-            if (optionalPool.Equals(("all").ToLower()))
+            SyncFile();
+            if (optionalPool.Equals(("-a").ToLower()))
             {
-                SyncFile();
                 mod = "all players";
-                foreach(String s in people)
+                foreach (String s in people)
                 {
                     sb.Append(s + '\n');
                 }
@@ -581,7 +710,7 @@ namespace UtilityBot.Commands.GGST
             else
             {
                 mod = "active";
-                foreach(String s in activePool)
+                foreach (String s in activePool)
                 {
                     sb.Append(s + '\n');
                 }
@@ -595,6 +724,13 @@ namespace UtilityBot.Commands.GGST
             activePool.Clear();
             people.Clear();
             ReadFile();
+        }
+
+        private void SyncPlayerInfo()
+        {
+            WritePlayerInfo();
+            playerInfoContainer.Clear();
+            ReadPlayerInfo();
         }
 
         private void ReadFile()
@@ -632,7 +768,7 @@ namespace UtilityBot.Commands.GGST
             try
             {
                 playerMatches = JsonConvert.DeserializeObject<List<Structs.PlayerMatches>>(System.IO.File.ReadAllText(@"C:\\Users\\Beebd\\source\\repos\\UtilityBot\\UtilityBot\\Commands\\GGST\\GGSTMatches.json"));
-                if(playerMatches == null)
+                if (playerMatches == null)
                 {
                     playerMatches = new List<Structs.PlayerMatches>();
                 }
@@ -643,11 +779,34 @@ namespace UtilityBot.Commands.GGST
             }
         }
 
+        private void ReadPlayerInfo()
+        {
+            try
+            {
+                playerInfoContainer = JsonConvert.DeserializeObject<List<Structs.Player>>(System.IO.File.ReadAllText(@"C:\\Users\\Beebd\\source\\repos\\UtilityBot\\UtilityBot\\Commands\\GGST\\GGSTPlayerInfo.json"));
+                if (playerInfoContainer == null)
+                {
+                    playerInfoContainer = new List<Structs.Player>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);    
+            }
+        }
+
+        private void WritePlayerInfo()
+        {
+            var json = JsonConvert.SerializeObject(playerInfoContainer.ToArray(), Formatting.Indented);
+            System.IO.File.WriteAllText(@"C:\\Users\\Beebd\\source\\repos\\UtilityBot\\UtilityBot\\Commands\\GGST\\GGSTPlayerInfo.json", json);
+        }
+
         private void startUp()
         {
             ReadFile();
             isRead = true;
             ReadJson();
+            ReadPlayerInfo();
             duelMessages.Add("{0} will now be subject to the wrath of {1}");
             duelMessages.Add("Wheel has chosen {0} and {1} to fight");
             duelMessages.Add("{0} wants to be 632146P'ed by {1}");

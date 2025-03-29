@@ -27,5 +27,11 @@ namespace UtilityBot.Commands.GGST
             public List<DuelData> matches { get; set; }
             public int totalMatches { get; set; }
         }
+
+        public class Player
+        {
+            public string playerName { get; set; }
+            public List<string> characters { get; set; }
+        }
     }
 }
