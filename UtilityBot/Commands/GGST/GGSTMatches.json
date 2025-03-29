@@ -42,7 +42,7 @@
   {
     "player1": "ink sac",
     "player1Wins": 1,
-    "player2": "mersalt",
+    "player2": "idiot",
     "player2Wins": 0,
     "matches": [
       {
@@ -56,7 +56,7 @@
     "totalMatches": 1
   },
   {
-    "player1": "mersalt",
+    "player1": "idiot",
     "player1Wins": 3,
     "player2": "ratti",
     "player2Wins": 2,
@@ -86,7 +86,7 @@
     "totalMatches": 3
   },
   {
-    "player1": "mersalt",
+    "player1": "idiot",
     "player1Wins": 0,
     "player2": "nimo",
     "player2Wins": 2,

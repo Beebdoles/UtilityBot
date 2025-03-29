@@ -23,8 +23,8 @@ namespace UtilityBot.Commands.GGST
         private String player1;
         private String player2;
 
-        private List<string> activePool = new List<string>();
-        private List<string> people = new List<string>();
+        private List<string> activePool = new List<string>();                                       //use this for updating while program is running
+        private List<string> people = new List<string>();                                           //use this as final storage
         private List<string> duelMessages = new List<string>();
         private List<Structs.PlayerMatches> playerMatches = new List<Structs.PlayerMatches>();
 
@@ -479,30 +479,21 @@ namespace UtilityBot.Commands.GGST
         }
 
         [Command("Add")]
-        [DSharpPlus.CommandsNext.Attributes.Description("Add a new person to the player and active pool")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Add a new person to the active pool")]
         public async Task Add(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("Person to add")] string person)
         {
             if (!isRead)
             {
                 startUp();
             }
-            if (people.Contains(person))
+            if (!activePool.Contains(person))
             {
-                if (!activePool.Contains(person))
-                {
-                    activePool.Add(person);
-                    await ctx.RespondAsync("Added " + person + " to the active pool");
-                }
-                else
-                {
-                    await ctx.RespondAsync(person + " is already in the active pool");
-                }
+                activePool.Add(person);
+                await ctx.RespondAsync("Added " + person + " to the active pool");
             }
             else
             {
-                activePool.Add(person);
-                people.Add(person);
-                await ctx.RespondAsync("Added " + person + " to the player pool and active pool");
+                await ctx.RespondAsync(person + " is already in the active pool");
             }
             WriteFile();
         }
@@ -569,7 +560,7 @@ namespace UtilityBot.Commands.GGST
 
         [Command("ggstplayers")]
         [DSharpPlus.CommandsNext.Attributes.Description("Display all registered players")]
-        public async Task GGSTPlayers(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("[optional: enter \"people\"] check for players in active player pool")] String optionalPool = "active")
+        public async Task GGSTPlayers(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("[optional: enter \"all\"] check for players in total player pool")] String optionalPool = "active")
         {
             if(!isRead)
             {
@@ -578,23 +569,32 @@ namespace UtilityBot.Commands.GGST
 
             StringBuilder sb = new StringBuilder();
             String mod = "";
-            if (optionalPool.Equals(("active").ToLower()))
+            if (optionalPool.Equals(("all").ToLower()))
             {
-                mod = "active duel";
-                foreach(String s in activePool)
-                {
-                    sb.Append(s + " ");
-                }
-            }
-            else if(optionalPool.Equals("people"))
-            {
-                mod = "overall player";
+                SyncFile();
+                mod = "all players";
                 foreach(String s in people)
                 {
-                    sb.Append(s + " ");
+                    sb.Append(s + '\n');
+                }
+            }
+            else
+            {
+                mod = "active";
+                foreach(String s in activePool)
+                {
+                    sb.Append(s + '\n');
                 }
             }
             await ctx.RespondAsync(String.Format("Current players in {0} pool: \n" + sb.ToString(), mod));
+        }
+
+        private void SyncFile()
+        {
+            WriteFile();
+            activePool.Clear();
+            people.Clear();
+            ReadFile();
         }
 
         private void ReadFile()
@@ -614,7 +614,7 @@ namespace UtilityBot.Commands.GGST
         {
             System.IO.File.WriteAllText("C:\\Users\\Beebd\\source\\repos\\UtilityBot\\UtilityBot\\Commands\\GGST\\GGSTPlayers.txt", string.Empty);
             StreamWriter sw = new StreamWriter("C:\\Users\\Beebd\\source\\repos\\UtilityBot\\UtilityBot\\Commands\\GGST\\GGSTPlayers.txt");
-            foreach (string s in people)
+            foreach (string s in activePool)
             {
                 sw.WriteLine(s);
             }
