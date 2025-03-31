@@ -1,28 +1,53 @@
 [
   {
+    "willFight": true,
+    "playerName": "nimo",
+    "randomize": false,
+    "defaultCharacter": "iron deficiency child",
+    "characters": [
+      "iron deficiency child",
+      "potemkin",
+      "calm woman",
+      "roasted fish",
+      "elderly"
+    ]
+  },
+  {
+    "willFight": true,
+    "playerName": "suti",
+    "randomize": true,
+    "defaultCharacter": "baller",
+    "characters": [
+      "baller",
+      "gender specific combo",
+      "essential oils",
+      "unhappy chaos",
+      "bhop"
+    ]
+  },
+  {
+    "willFight": true,
     "playerName": "lyle",
+    "randomize": false,
+    "defaultCharacter": "candy mom",
     "characters": [
       "candy mom"
     ]
   },
   {
-    "playerName": "nimo",
+    "willFight": true,
+    "playerName": "moth",
+    "randomize": false,
+    "defaultCharacter": "stable woman",
     "characters": [
-      "iron deficiency child",
-      "potemkin",
-      "calm woman"
+      "stable woman"
     ]
   },
   {
-    "playerName": "suti",
-    "characters": [
-      "baller",
-      "gender specific combo",
-      "essential oils"
-    ]
-  },
-  {
-    "playerName": "idiot",
+    "willFight": true,
+    "playerName": "seasalt",
+    "randomize": false,
+    "defaultCharacter": "faust",
     "characters": [
       "faust"
     ]

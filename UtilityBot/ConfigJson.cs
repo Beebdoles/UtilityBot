@@ -10,5 +10,8 @@ namespace UtilityBot
 
         [JsonProperty("prefix")]
         public string Prefix { get; private set; }
+
+        [JsonProperty("ID")]
+        public ulong ID { get; private set; }
     }
 }

@@ -30,7 +30,10 @@ namespace UtilityBot.Commands.GGST
 
         public class Player
         {
+            public bool willFight { get; set; }
             public string playerName { get; set; }
+            public Boolean randomize { get; set; }
+            public string defaultCharacter { get; set; }
             public List<string> characters { get; set; }
         }
     }

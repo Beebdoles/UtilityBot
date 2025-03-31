@@ -13,6 +13,8 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
+using static UtilityBot.Commands.GGST.Structs;
+using System.IO;
 
 namespace UtilityBot.Commands.GGST
 {
@@ -38,17 +40,42 @@ namespace UtilityBot.Commands.GGST
             {
                 startUp();
             }
-            if (activePool.Count > 1)
+
+            DiscordEmbedBuilder dmb = new DiscordEmbedBuilder();
+            dmb.Title = "Wheel of Misfortune";
+
+            int activecount = 0;
+            int totalcount = 0;
+            foreach (Structs.Player p in playerInfoContainer)
+            {
+                if (p.willFight)
+                {
+                    ++activecount;
+                }
+                ++totalcount;
+            }
+
+            if (activecount > 1)
             {
                 isMatchOngoing = false;
                 Random rd = new Random();
-                int a = rd.Next(0, activePool.Count);
-                int b = a;
-                while (a == b)
+
+                int a = rd.Next(0, totalcount);
+
+                while (!playerInfoContainer[a].willFight)
                 {
-                    b = rd.Next(0, activePool.Count);
+                    a = rd.Next(0, totalcount);
                 }
-                await ctx.RespondAsync(string.Format(duelMessages[rd.Next(0, duelMessages.Count)], activePool[a], activePool[b]) + "\nPlayer 1: " + activePool[a] + " Player 2: " + activePool[b]);
+
+                int b = a;
+
+                while (!playerInfoContainer[b].willFight || playerInfoContainer[a] == playerInfoContainer[b])
+                {
+                    b = rd.Next(0, totalcount);
+                }
+
+                dmb.AddField("Poor souls: ", string.Format(duelMessages[rd.Next(0, duelMessages.Count)], activePool[a], activePool[b]) + "\nPlayer 1: " + activePool[a] + " Player 2: " + activePool[b]);
+                //await ctx.RespondAsync(string.Format(duelMessages[rd.Next(0, duelMessages.Count)], activePool[a], activePool[b]) + "\nPlayer 1: " + activePool[a] + " Player 2: " + activePool[b]);
 
                 if (optional.Equals("-r"))
                 {
@@ -59,23 +86,36 @@ namespace UtilityBot.Commands.GGST
                         if (playerInfoContainer[i].playerName.Equals(activePool[a]))
                         {
                             choicea = playerInfoContainer[i].characters[rd2.Next(0, playerInfoContainer[i].characters.Count)];
+                            if (playerInfoContainer[i].randomize == false)
+                            {
+                                choicea = playerInfoContainer[i].defaultCharacter;
+                            }
                         }
                         if (playerInfoContainer[i].playerName.Equals(activePool[b]))
                         {
                             choiceb = playerInfoContainer[i].characters[rd2.Next(0, playerInfoContainer[i].characters.Count)];
+                            if (playerInfoContainer[i].randomize == false)
+                            {
+                                choiceb = playerInfoContainer[i].defaultCharacter;
+                            }
                         }
                     }
-
-                    await ctx.RespondAsync(activePool[a] + " will play: " + choicea + ", " + activePool[b] + " will play: " + choiceb);
+                    dmb.AddField("Chosen characters: ", activePool[a] + " will play: " + choicea + ", " + activePool[b] + " will play: " + choiceb, false);
                 }
 
                 isMatchOngoing = true;
                 player1 = activePool[a];
                 player2 = activePool[b];
+
+                dmb.Color = DiscordColor.Green;
+                dmb.Title = ">duel";
+
+                await ctx.Channel.SendMessageAsync(dmb.Build());
             }
             else
             {
-                await ctx.RespondAsync("not enough people to create a duel");
+                List<(string, string)> list = new List<(string, string)>{("Not enough people to create a duel", "add more people to active pool")};
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("duel", true, list));
             }
         }
 
@@ -499,55 +539,94 @@ namespace UtilityBot.Commands.GGST
         }
 
         [Command("Add")]
-        [DSharpPlus.CommandsNext.Attributes.Description("Add a new person to the active pool")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Add a new person to the active pool [ADMIN ONLY]")]
         public async Task Add(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("Person to add")] string person)
         {
-            if (!isRead)
+            List<(string, string)> list = new List<(string, string)>();
+
+            var json = string.Empty;
+            string path = @"C:\Users\Beebd\source\repos\UtilityBot\UtilityBot\config.json";
+
+            using (var fs = System.IO.File.OpenRead(path))
+            using (var sr = new StreamReader(fs, new UTF8Encoding(false)))
+                json = await sr.ReadToEndAsync().ConfigureAwait(false);
+
+            ConfigJson configJson = JsonConvert.DeserializeObject<ConfigJson>(json);
+
+            if (ctx.Member.Id == configJson.ID)
             {
-                startUp();
-            }
-            if (!activePool.Contains(person))
-            {
-                activePool.Add(person);
-                await ctx.RespondAsync("Added " + person + " to the active pool");
+                if (!isRead)
+                {
+                    startUp();
+                }
+                if (!activePool.Contains(person))
+                {
+                    activePool.Add(person);
+                    await ctx.RespondAsync("Added " + person + " to the active pool");
+                }
+                else
+                {
+                    await ctx.RespondAsync(person + " is already in the active pool");
+                }
+                WriteFile();
             }
             else
             {
-                await ctx.RespondAsync(person + " is already in the active pool");
+                list.Add(("ADMIN ONLY COMMAND", "sry, but using this without access to raw json might cause ireversible problems :("));
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("add", true, list));
             }
-            WriteFile();
         }
 
         [Command("Remove")]
-        [DSharpPlus.CommandsNext.Attributes.Description("remove a person from the active pool")]
+        [DSharpPlus.CommandsNext.Attributes.Description("remove a person from the active pool [ADMIN ONLY]")]
         public async Task Remove(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("Person to remove")] string person)
         {
-            if (!isRead)
-            {
-                startUp();
-            }
-            if (activePool.Remove(person))
-            {
-                await ctx.RespondAsync("Removed " + person + " from the active pool");
+            List<(string, string)> list = new List<(string, string)>();
 
-                foreach (Structs.Player p in playerInfoContainer)
+            var json = string.Empty;
+            string path = @"C:\Users\Beebd\source\repos\UtilityBot\UtilityBot\config.json";
+
+            using (var fs = System.IO.File.OpenRead(path))
+            using (var sr = new StreamReader(fs, new UTF8Encoding(false)))
+                json = await sr.ReadToEndAsync().ConfigureAwait(false);
+
+            ConfigJson configJson = JsonConvert.DeserializeObject<ConfigJson>(json);
+
+            if (ctx.Member.Id == configJson.ID)
+            {
+                if (!isRead)
                 {
-                    if (p.playerName.Equals(person))
-                    {
-                        playerInfoContainer.Remove(p);
-                        await ctx.RespondAsync("Removed " + person + " from character randomization pool");
-
-                        break;
-                    }
+                    startUp();
                 }
 
-                SyncPlayerInfo();
+                if (activePool.Remove(person))
+                {
+                    await ctx.RespondAsync("Removed " + person + " from the active pool");
+
+                    foreach (Structs.Player p in playerInfoContainer)
+                    {
+                        if (p.playerName.Equals(person))
+                        {
+                            playerInfoContainer.Remove(p);
+                            await ctx.RespondAsync("Removed " + person + " from character randomization pool");
+
+                            break;
+                        }
+                    }
+
+                    SyncPlayerInfo();
+                }
+                else
+                {
+                    await ctx.RespondAsync("Cannot find " + person + " in active pool");
+                }
+                WriteFile();
             }
             else
             {
-                await ctx.RespondAsync("Cannot find " + person + " in active pool");
+                list.Add(("ADMIN ONLY COMMAND", "sry, but using this without access to raw json might cause ireversible problems :("));
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("remove", true, list));
             }
-            WriteFile();
         }
 
         [Command("Rename")]
@@ -559,11 +638,15 @@ namespace UtilityBot.Commands.GGST
                 startUp();
             }
             ReadJson();
+
+            List<(string, string)> list = new List<(string, string)>();
+
             if (people.Contains(person))
             {
                 people.Remove(person);
                 people.Add(newName);
-                await ctx.RespondAsync("Replaced " + person + " with " + newName);
+                list.Add(("Replaced " + person + " with " + newName, "seizures"));
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("rename", false, list));
 
                 if (activePool.Contains(person))
                 {
@@ -597,8 +680,37 @@ namespace UtilityBot.Commands.GGST
             }
             else
             {
-                await ctx.RespondAsync("Cannot find " + person + " in overall player pool");
+                list.Add(("Cannot find " + person + " in overall player pool", "did u make a typo?"));
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("rename", true, list));
             }
+        }
+
+        [Command("willfight")]
+        [DSharpPlus.CommandsNext.Attributes.Description("determine whether or not to count a player in duel")]
+        public async Task WillFight(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("name of player")] string playerName, [DSharpPlus.CommandsNext.Attributes.Description("status")] Boolean status)
+        {
+            List<(string, string)> list = new List<(string, string)> ();
+
+            if (!activePool.Contains(playerName))
+            {
+                list.Add(("Cannot find " + playerName + " in active pool", "did u spell something wrong?"));
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("addcharacter", true, list));
+                return;
+            }
+
+            foreach (Structs.Player p in playerInfoContainer)
+            {
+                if (p.playerName.Equals(playerName))
+                {
+                    p.willFight = status;
+                    list.Add(("Set " + playerName + "'s status to " + status.ToString(), "[this is a field]"));
+                    await ctx.Channel.SendMessageAsync(BuildGenericEmbed("willfight", false, list));
+                    SyncPlayerInfo();
+                    return;
+                }
+            }
+
+            SyncPlayerInfo();
         }
 
         [Command("addcharacter")]
@@ -610,9 +722,12 @@ namespace UtilityBot.Commands.GGST
                 startUp();
             }
 
+            List<(string, string)> list = new List<(string, string)> ();
+
             if (!activePool.Contains(playerName))
             {
-                await ctx.RespondAsync("Cannot find " + playerName + " in active pool");
+                list.Add(("Cannot find " + playerName + " in active pool", "did u spell something wrong?"));
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("addcharacter", true, list));
                 return;
             }
 
@@ -624,14 +739,21 @@ namespace UtilityBot.Commands.GGST
                     if (!playerInfoContainer[i].characters.Contains(character))
                     {
                         playerInfoContainer[i].characters.Add(character);
+                        if (playerInfoContainer[i].defaultCharacter == null)
+                        {
+                            playerInfoContainer[i].defaultCharacter = character;
+                        }
 
-                        await ctx.RespondAsync("Added " + character + " to " + playerName + "'s list");
+                        list.Add(("Added " + character + " to " + playerName + "'s list", "[this is a field]"));
+                        await ctx.Channel.SendMessageAsync(BuildGenericEmbed("addcharacter", false, list));
                     }
                     else
                     {
-                        await ctx.RespondAsync(character + " is already present in this player's list");
+                        list.Add((character + " is already present in this player's list", "skill issue idk"));
+                        await ctx.Channel.SendMessageAsync(BuildGenericEmbed("addcharacter", true, list));
                     }
                     notFound = false;
+                    break;
                 }
                 else 
                 {
@@ -645,11 +767,12 @@ namespace UtilityBot.Commands.GGST
                 temp.characters = new List<string>();
                 temp.characters.Add(character);
                 temp.playerName = playerName;
+                temp.willFight = true;
                 playerInfoContainer.Add(temp);
 
-                await ctx.RespondAsync("Added " + character + " to " + playerName + "'s list");
+                list.Add(("Added " + character + " to " + playerName + "'s list", "[this is a field]"));
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("addcharacter", false, list));
             }
-
             SyncPlayerInfo();
         }
 
@@ -662,9 +785,12 @@ namespace UtilityBot.Commands.GGST
                 startUp();
             }
 
-            if(!activePool.Contains(playerName))
+            List<(string, string)> list = new List<(string, string)>();
+
+            if (!activePool.Contains(playerName))
             {
-                await ctx.RespondAsync("Cannot find " + playerName + " in active pool");
+                list.Add(("Cannot find " + playerName + " in active pool", "run \">ggstplayers\" for current list of active players"));
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("removecharacter", true, list));
                 return;
             }
 
@@ -676,17 +802,75 @@ namespace UtilityBot.Commands.GGST
                     {
                         playerInfoContainer[i].characters.Remove(character);
 
-                        await ctx.RespondAsync("Removed " + character + " from " + playerName + "'s list");
+                        list.Add(("Removed " + character + " from " + playerName + "'s list", "[this is a field]"));
+                        await ctx.Channel.SendMessageAsync(BuildGenericEmbed("removecharacter", false, list));
                     }
                     else
                     {
-                        await ctx.RespondAsync(character + " is not present in this player's list");
+                        list.Add((character + " is not present in this player's list", "did you spell something wrong?"));
+                        await ctx.Channel.SendMessageAsync(BuildGenericEmbed("removecharacter", true, list));
                     }
                 }
             }
             SyncPlayerInfo();
         }
 
+        [Command("setdefault")]
+        [DSharpPlus.CommandsNext.Attributes.Description("set the default character for a player")]
+        public async Task SetDefault(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("player name")] string player, [DSharpPlus.CommandsNext.Attributes.Description("player name")] string character)
+        {
+            List<(string, string)> list = new List<(string, string)>();
+
+            if (!activePool.Contains(player))
+            {
+                list.Add(("Cannot find " + player + " in active pool", "run \">ggstplayers\" for current list of active players"));
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("allowrandomize", true, list));
+                return;
+            }
+            foreach (Structs.Player p in playerInfoContainer)
+            { 
+                if(p.playerName.Equals(player)) 
+                {
+                    if (!p.characters.Contains(character))
+                    {
+                        list.Add((player + " does not have " + character + "in their list", "did u make a typo?"));
+                        await ctx.Channel.SendMessageAsync(BuildGenericEmbed("setdefault", true, list));
+                        return;
+                    }
+
+                    p.defaultCharacter = character;
+                    list.Add(("Set " + character + " as " + player + "'s default", "[this is a field]"));
+                    await ctx.Channel.SendMessageAsync(BuildGenericEmbed("setdefault", false, list));
+                    break;
+                }
+            }
+        }
+
+        [Command("randomize")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Set whether or not a player's character can be randomized with \"-r\" flag in >duel")]
+        public async Task Randomize(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("player name")] string player, [DSharpPlus.CommandsNext.Attributes.Description("status to change to")] Boolean status)
+        {
+            List<(string, string)> list = new List<(string, string)>();
+
+            if (!activePool.Contains(player))
+            {
+                list.Add(("Cannot find " + player + " in active pool", "run \">ggstplayers\" for current list of active players"));
+                await ctx.Channel.SendMessageAsync(BuildGenericEmbed("randomize", true, list));
+                return;
+            }
+            foreach (Structs.Player p in playerInfoContainer)
+            {
+                if (p.playerName.Equals(player))
+                {
+                    p.randomize = status;
+                    list.Add(("Set " + player + "'s status to " + status.ToString(), "[this is a field]"));
+                    await ctx.Channel.SendMessageAsync(BuildGenericEmbed("randomize", false, list));
+                    SyncPlayerInfo();
+                    return;
+                }
+            }
+        }
+        
         [Command("ggstplayers")]
         [DSharpPlus.CommandsNext.Attributes.Description("Display all registered players")]
         public async Task GGSTPlayers(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("[optional: enter \"-a\"] check for players in total player pool")] String optionalPool = "active")
@@ -716,6 +900,25 @@ namespace UtilityBot.Commands.GGST
                 }
             }
             await ctx.RespondAsync(String.Format("Current players in {0} pool: \n" + sb.ToString(), mod));
+        }
+
+        private DiscordEmbed BuildGenericEmbed(string title, Boolean isError, List<(string, string)> fields)
+        {
+            DiscordEmbedBuilder dmb = new DiscordEmbedBuilder();
+
+            dmb.Title = ">" + title;
+
+            foreach ((string, string) field in fields)
+            {
+                dmb.AddField(field.Item1, field.Item2);
+            }
+
+            dmb.Color = DiscordColor.Green;
+            if (isError)
+            {
+                dmb.Color = DiscordColor.Red;
+            }
+            return dmb.Build();
         }
 
         private void SyncFile()
@@ -787,6 +990,13 @@ namespace UtilityBot.Commands.GGST
                 if (playerInfoContainer == null)
                 {
                     playerInfoContainer = new List<Structs.Player>();
+                }
+                foreach (Structs.Player p in playerInfoContainer)
+                {
+                    if (p.defaultCharacter == null)
+                    {
+                        if (p.characters.Count != 0) { p.defaultCharacter = p.characters[0]; };
+                    }
                 }
             }
             catch (Exception ex)
