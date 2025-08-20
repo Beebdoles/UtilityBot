@@ -10,7 +10,7 @@ namespace UtilityBot.EventArgs
     public class Events : BaseCommandModule
     {
         private static HashSet<string> BannedStrings = new HashSet<string>();
-        private static HashSet<ulong> Blacklist = [623854263155818496];
+        private static HashSet<ulong> Blacklist = [623854263155818496, 442104107126489098];
         private static Boolean startup = false;
         private static DateTime lastUpdate = new DateTime(2025, 1, 1, 1, 1, 1);
 
@@ -31,15 +31,15 @@ namespace UtilityBot.EventArgs
         [Description("Increase banned words for yimmy")]
         public async Task ExpandBannedWords(CommandContext ctx, params string[] phrase)
         {
-            string str = "";
+            if (phrase.Length > 0) { foreach (string str in phrase) { BannedStrings.Add(str); } } else { await ctx.RespondAsync("Please specify a word/phrase to ban for yimmy"); return; }
+            string stringify = "";
             for (int i = 0; i < phrase.Length; ++i)
             {
-                if (i != phrase.Length - 1) { str += phrase[i] + " "; } else { str += phrase[i]; }
+                if (i != phrase.Length - 1) { stringify += phrase[i] + " "; } else { stringify += phrase[i]; }
 
             }
-            if (!str.Equals("")) { BannedStrings.Add(str); } else { await ctx.RespondAsync("Please specify a word/phrase to ban for yimmy"); return; }
 
-            await ctx.RespondAsync("Added " + str + " to ban list for yimmy");
+            await ctx.RespondAsync("Added " + "\"" + stringify + "\"" + " to ban list for yimmy");
 
             if (DateTime.Now - lastUpdate > new TimeSpan(0, 1, 0, 0)) 
             {
