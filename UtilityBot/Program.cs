@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Text;
 using UtilityBot.Commands;
 using UtilityBot.Commands.GGST;
+using UtilityBot.EventArgs;
 
 namespace UtilityBot
 {
@@ -37,27 +38,13 @@ namespace UtilityBot
 
             commands.RegisterCommands<Logging>();
             commands.RegisterCommands<GuiltyGear>();
+            commands.RegisterCommands<Events>();
 
-            //discordClient.MessageCreated += MessageCreatedHandler;
+            discordClient.MessageCreated += new Events().MessageCreatedHandlerTest;
+            
 
             await discordClient.ConnectAsync();
             await Task.Delay(-1);
         }
-
-        /*
-        public static async Task MessageCreatedHandler(DiscordClient s, MessageCreateEventArgs e)
-        {
-            Console.WriteLine(e.Message);
-            if (e.Author.Id == 442104107126489098)
-            {
-                await e.Message.RespondAsync("!warn 719713599324684358 haha noob");
-            }
-            /*
-            if (e.Guild?.Id == 379378609942560770 && e.Author.Id == 168548441939509248)
-            {
-                await e.Message.DeleteAsync();
-            }
-            
-        }*/
     }
 }

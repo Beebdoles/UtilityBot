@@ -15,7 +15,7 @@
   {
     "willFight": true,
     "playerName": "suti",
-    "randomize": true,
+    "randomize": false,
     "defaultCharacter": "baller",
     "characters": [
       "baller",
@@ -35,7 +35,7 @@
     ]
   },
   {
-    "willFight": true,
+    "willFight": false,
     "playerName": "moth",
     "randomize": false,
     "defaultCharacter": "stable woman",
